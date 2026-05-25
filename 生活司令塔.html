@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生活司令塔 🌿</title>
+<style>
+:root {
+  --bg: #f7f4ef;
+  --card: #ffffff;
+  --primary: #c8908a;
+  --primary-light: #f9edeb;
+  --secondary: #c2b49e;
+  --secondary-light: #f5f0e8;
+  --accent: #c9b8a8;
+  --accent-light: #f5ede4;
+  --warn: #d4a87a;
+  --warn-light: #fdf3e8;
+  --danger: #c47878;
+  --danger-light: #fdf0f0;
+  --text: #3e3530;
+  --text-light: #9c9088;
+  --border: #e8e0d4;
+  --shadow: 0 2px 14px rgba(60,40,20,0.07);
+  --r: 16px;
+  --r-sm: 10px;
+}
+.mode-tired    { --bg:#f5f2ee; --primary:#c0a898; --primary-light:#f6efea; }
+.mode-pregnancy{ --bg:#f8f4f0; --primary:#cc9e96; --primary-light:#fbeee9; --secondary:#b8c8bc; }
+.mode-rainy    { --bg:#f2f0ec; --primary:#a8a098; --primary-light:#efece8; --secondary:#b8b4ac; }
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px;transition:background .3s}
+
+/* ── HEADER ── */
+.header{background:var(--card);padding:18px 18px 14px;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,0.04)}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.app-title{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.app-title span{color:var(--primary)}
+.date-txt{font-size:12px;color:var(--text-light)}
+.mode-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.mode-row::-webkit-scrollbar{display:none}
+.mode-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--card);color:var(--text-light);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:inherit}
+.mode-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* ── NAV ── */
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100}
+.nav-btn{flex:1;padding:10px 4px 14px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text-light);font-size:10px;font-family:inherit;transition:color .2s}
+.nav-btn.active{color:var(--primary)}
+.nav-btn .ic{font-size:22px}
+.nav-btn .badge-dot{width:7px;height:7px;background:var(--danger);border-radius:50%;position:absolute;top:8px;right:calc(50% - 14px)}
+
+/* ── SECTIONS ── */
+.section{display:none;padding:18px 16px;max-width:500px;margin:0 auto}
+.section.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--r);padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-title{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+
+/* ── TODAY HERO ── */
+.hero{background:linear-gradient(135deg,var(--primary-light) 0%,var(--secondary-light) 100%);border-radius:var(--r);padding:22px 20px;margin-bottom:14px}
+.hero-greeting{font-size:22px;font-weight:800;margin-bottom:4px}
+.hero-msg{font-size:13px;color:var(--text-light);line-height:1.7}
+.mode-banner{background:linear-gradient(135deg,var(--primary-light),var(--accent-light));border-radius:var(--r-sm);padding:13px 16px;margin-bottom:14px;font-size:13px;line-height:1.7;color:var(--text)}
+
+/* ── RECOMMEND ── */
+.rec-list{list-style:none}
+.rec-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.rec-item:last-child{border-bottom:none}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;flex-shrink:0}
+.b-urg{background:var(--danger-light);color:var(--danger)}
+.b-today{background:var(--warn-light);color:#a07040}
+.b-kids{background:var(--secondary-light);color:#7a6a50}
+.b-norm{background:var(--primary-light);color:var(--primary)}
+
+/* ── PROGRESS ── */
+.prog-txt{font-size:12px;color:var(--text-light);margin-bottom:6px}
+.prog-bar{background:var(--border);border-radius:4px;height:7px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--secondary),var(--primary));border-radius:4px;transition:width .6s ease}
+
+/* ── TASKS ── */
+.filter-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px}
+.filter-row::-webkit-scrollbar{display:none}
+.ftab{flex-shrink:0;padding:6px 14px;border-radius:18px;border:1.5px solid var(--border);background:var(--card);color:var(--text-light);font-size:12px;cursor:pointer;transition:all .2s;font-family:inherit}
+.ftab.active{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+
+.task-item{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);animation:fadeUp .25s ease}
+.task-item:last-child{border-bottom:none}
+.task-item.done .t-title{text-decoration:line-through;color:var(--text-light)}
+.chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:12px;margin-top:1px}
+.chk.on{background:var(--secondary);border-color:var(--secondary);color:#fff}
+.t-body{flex:1;min-width:0}
+.t-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.t-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.t-cat{font-size:11px;padding:2px 8px;border-radius:8px;background:var(--primary-light);color:var(--primary)}
+.t-date{font-size:11px;color:var(--text-light)}
+.t-date.ov{color:var(--danger);font-weight:600}
+.t-date.td{color:#a07040;font-weight:600}
+.t-memo{font-size:12px;color:var(--text-light);margin-top:4px;line-height:1.5}
+.btn-ic{border:none;background:none;cursor:pointer;color:var(--text-light);padding:4px;border-radius:6px;font-size:15px}
+.btn-ic:hover{background:var(--bg)}
+
+/* ── SHOPPING ── */
+.shop-row{display:flex;gap:8px;margin-bottom:12px}
+.shop-row input{flex:1}
+.btn-add{padding:11px 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--r-sm);font-size:20px;cursor:pointer;flex-shrink:0;transition:opacity .2s}
+.btn-add:hover{opacity:.85}
+.quick-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.qtag{padding:6px 12px;border-radius:16px;background:var(--primary-light);color:var(--primary);font-size:12px;cursor:pointer;border:none;transition:all .2s;font-family:inherit}
+.qtag:hover{background:var(--primary);color:#fff}
+.shop-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);animation:fadeUp .25s ease}
+.shop-item:last-child{border-bottom:none}
+.shop-item.done .s-name{text-decoration:line-through;color:var(--text-light)}
+.s-chk{width:24px;height:24px;border-radius:6px;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:13px}
+.s-chk.on{background:var(--secondary);border-color:var(--secondary);color:#fff}
+.s-name{flex:1;font-size:14px}
+
+/* ── SCHOOL ── */
+.dl-warn{background:var(--danger-light);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:10px;font-size:13px;color:var(--danger);display:flex;align-items:center;gap:8px}
+.school-item{display:flex;align-items:flex-start;gap:10px;padding:13px 0;border-bottom:1px solid var(--border);animation:fadeUp .25s ease}
+.school-item:last-child{border-bottom:none}
+.s-type{font-size:11px;padding:3px 9px;border-radius:8px;font-weight:600;flex-shrink:0;margin-top:1px}
+.type-提出{background:var(--danger-light);color:var(--danger)}
+.type-持ち物{background:var(--warn-light);color:#c47a00}
+.type-行事{background:var(--accent-light);color:var(--accent)}
+
+/* ── FORMS ── */
+.form-g{margin-bottom:14px}
+.form-g label{display:block;font-size:11px;font-weight:700;color:var(--text-light);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.fi{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;background:var(--bg);color:var(--text);transition:border-color .2s;font-family:inherit}
+.fi:focus{outline:none;border-color:var(--primary)}
+select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M5 7L0 0h10z' fill='%239a9095'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-color:var(--bg)}
+.pri-row{display:flex;gap:8px}
+.pri-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--text-light);font-size:13px;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit}
+.pri-btn.ph{background:var(--danger-light);border-color:var(--danger);color:var(--danger)}
+.pri-btn.pm{background:var(--warn-light);border-color:var(--warn);color:#c47a00}
+.pri-btn.pl{background:var(--secondary-light);border-color:var(--secondary);color:#4a8a60}
+.btn-primary{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:var(--r-sm);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:inherit}
+.btn-primary:hover{opacity:.9}
+.btn-sec{width:100%;padding:12px;background:var(--bg);color:var(--text-light);border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;cursor:pointer;transition:all .2s;font-family:inherit;margin-top:8px}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:90px;right:18px;width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;z-index:99;transition:all .2s}
+.fab:hover{transform:scale(1.07)}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.28);z-index:200;display:none;align-items:flex-end;backdrop-filter:blur(2px)}
+.overlay.open{display:flex}
+.modal{background:var(--card);border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:500px;margin:0 auto;max-height:88vh;overflow-y:auto}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-hd h2{font-size:17px;font-weight:800}
+.close-btn{border:none;background:var(--bg);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text-light)}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:28px;color:var(--text-light);font-size:14px;line-height:2}
+.empty .ei{font-size:36px;display:block;margin-bottom:8px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+@media(min-width:500px){.section{padding:22px 20px}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">生活<span>司令塔</span> 🌿</div>
+    <div class="date-txt" id="dateTxt"></div>
+  </div>
+  <div class="mode-row">
+    <button class="mode-btn active" data-mode="normal"    onclick="setMode('normal')">☀️ 通常</button>
+    <button class="mode-btn"        data-mode="tired"     onclick="setMode('tired')">😴 疲れてる日</button>
+    <button class="mode-btn"        data-mode="pregnancy" onclick="setMode('pregnancy')">🤱 妊娠後期</button>
+    <button class="mode-btn"        data-mode="rainy"     onclick="setMode('rainy')">🌧️ 雨の日</button>
+  </div>
+</div>
+
+<!-- ===== TODAY ===== -->
+<div class="section active" id="sec-today">
+  <div class="hero">
+    <div class="hero-greeting" id="greeting">こんにちは ☀️</div>
+    <div class="hero-msg" id="heroMsg">今日も少しずつで大丈夫です 🌿</div>
+  </div>
+  <div id="modeBanner"></div>
+  <div class="card">
+    <div class="card-title">⭐ 今日のおすすめ</div>
+    <ul class="rec-list" id="recList"></ul>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 今日の進捗</div>
+    <div class="prog-txt" id="progTxt">まだ今日のタスクがありません</div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+  <div class="card" id="urgentCard" style="display:none">
+    <div class="card-title">🚨 期限が近い学校メモ</div>
+    <div id="urgentList"></div>
+  </div>
+</div>
+
+<!-- ===== TASKS ===== -->
+<div class="section" id="sec-tasks">
+  <div class="filter-row" id="filterRow">
+    <button class="ftab active" data-f="all"   onclick="setFilter('all')">すべて</button>
+    <button class="ftab" data-f="家事"         onclick="setFilter('家事')">🏠 家事</button>
+    <button class="ftab" data-f="買い物"       onclick="setFilter('買い物')">🛒 買い物</button>
+    <button class="ftab" data-f="子ども"       onclick="setFilter('子ども')">👶 子ども</button>
+    <button class="ftab" data-f="病院"         onclick="setFilter('病院')">🏥 病院</button>
+    <button class="ftab" data-f="学校"         onclick="setFilter('学校')">🎒 学校</button>
+    <button class="ftab" data-f="自分"         onclick="setFilter('自分')">💗 自分</button>
+    <button class="ftab" data-f="動画投稿"     onclick="setFilter('動画投稿')">🎬 動画</button>
+  </div>
+  <div class="card" id="taskCard"></div>
+</div>
+
+<!-- ===== SHOPPING ===== -->
+<div class="section" id="sec-shopping">
+  <div class="card">
+    <div class="card-title">🛒 買い物リスト</div>
+    <div class="shop-row">
+      <input class="fi" id="shopInput" type="text" placeholder="追加する..." onkeydown="if(event.key==='Enter')addShop()">
+      <button class="btn-add" onclick="addShop()">＋</button>
+    </div>
+    <div class="quick-tags">
+      <button class="qtag" onclick="qShop('牛乳')">🥛 牛乳</button>
+      <button class="qtag" onclick="qShop('パン')">🍞 パン</button>
+      <button class="qtag" onclick="qShop('卵')">🥚 卵</button>
+      <button class="qtag" onclick="qShop('おむつ')">👶 おむつ</button>
+      <button class="qtag" onclick="qShop('野菜')">🥦 野菜</button>
+      <button class="qtag" onclick="qShop('お肉')">🥩 お肉</button>
+      <button class="qtag" onclick="qShop('お魚')">🐟 お魚</button>
+      <button class="qtag" onclick="qShop('トイレットペーパー')">🧻 トイレ用紙</button>
+      <button class="qtag" onclick="qShop('シャンプー')">🧴 シャンプー</button>
+      <button class="qtag" onclick="qShop('洗剤')">🫧 洗剤</button>
+    </div>
+    <div id="shopActive"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">✅ 買ったもの</div>
+    <div id="shopDone"></div>
+    <button class="btn-sec" onclick="clearDoneShop()">✕ クリア</button>
+  </div>
+</div>
+
+<!-- ===== SCHOOL ===== -->
+<div class="section" id="sec-school">
+  <div id="schoolBanner"></div>
+  <div class="card">
+    <div class="card-title">📋 学校・子どもメモ</div>
+    <div id="schoolList"></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav">
+  <button class="nav-btn active" id="nav-today"    onclick="showSec('today')">    <span class="ic">🏠</span>今日</button>
+  <button class="nav-btn"        id="nav-tasks"    onclick="showSec('tasks')">    <span class="ic">✅</span>タスク</button>
+  <button class="nav-btn"        id="nav-shopping" onclick="showSec('shopping')"> <span class="ic">🛒</span>買い物</button>
+  <button class="nav-btn"        id="nav-school"   onclick="showSec('school')">   <span class="ic">🎒</span>学校</button>
+</nav>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openFab()">＋</button>
+
+<!-- MODAL: ADD TASK -->
+<div class="overlay" id="modalTask" onclick="bgClose(event,'modalTask')">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2>✏️ タスクを追加</h2>
+      <button class="close-btn" onclick="closeM('modalTask')">✕</button>
+    </div>
+    <div class="form-g">
+      <label>カテゴリ</label>
+      <select class="fi" id="tCat">
+        <option value="家事">🏠 家事</option>
+        <option value="買い物">🛒 買い物</option>
+        <option value="子ども">👶 子ども</option>
+        <option value="病院">🏥 病院</option>
+        <option value="学校">🎒 学校</option>
+        <option value="自分">💗 自分</option>
+        <option value="動画投稿">🎬 動画投稿</option>
+      </select>
+    </div>
+    <div class="form-g">
+      <label>タイトル ＊</label>
+      <input class="fi" id="tTitle" type="text" placeholder="何をする？">
+    </div>
+    <div class="form-g">
+      <label>日時</label>
+      <input class="fi" id="tDatetime" type="datetime-local">
+    </div>
+    <div class="form-g">
+      <label>メモ</label>
+      <textarea class="fi" id="tMemo" rows="2" style="resize:none" placeholder="メモがあれば..."></textarea>
+    </div>
+    <div class="form-g">
+      <label>優先度</label>
+      <div class="pri-row">
+        <button class="pri-btn ph" id="pH" onclick="setPri('high')">🔴 高い</button>
+        <button class="pri-btn"   id="pM" onclick="setPri('mid')">🟡 普通</button>
+        <button class="pri-btn"   id="pL" onclick="setPri('low')">🟢 低い</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveTask()">追加する ＋</button>
+  </div>
+</div>
+
+<!-- MODAL: ADD SCHOOL -->
+<div class="overlay" id="modalSchool" onclick="bgClose(event,'modalSchool')">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2>🎒 学校メモを追加</h2>
+      <button class="close-btn" onclick="closeM('modalSchool')">✕</button>
+    </div>
+    <div class="form-g">
+      <label>種類</label>
+      <select class="fi" id="sType">
+        <option value="提出">📝 提出物</option>
+        <option value="持ち物">🎒 持ち物</option>
+        <option value="行事">🎉 行事</option>
+      </select>
+    </div>
+    <div class="form-g">
+      <label>タイトル ＊</label>
+      <input class="fi" id="sTitle" type="text" placeholder="例：図工の作品提出">
+    </div>
+    <div class="form-g">
+      <label>期限・日程</label>
+      <input class="fi" id="sDeadline" type="date">
+    </div>
+    <div class="form-g">
+      <label>メモ</label>
+      <textarea class="fi" id="sMemo" rows="2" style="resize:none" placeholder="必要なものなど..."></textarea>
+    </div>
+    <button class="btn-primary" onclick="saveSchool()">追加する ＋</button>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+let tasks    = JSON.parse(localStorage.getItem('lct_tasks')    || '[]');
+let shopping = JSON.parse(localStorage.getItem('lct_shop')     || '[]');
+let school   = JSON.parse(localStorage.getItem('lct_school')   || '[]');
+let mode     = localStorage.getItem('lct_mode') || 'normal';
+let curFilter = 'all';
+let curPri    = 'high';
+let curSec    = 'today';
+
+const CAT_IC = {家事:'🏠',買い物:'🛒',子ども:'👶',病院:'🏥',学校:'🎒',自分:'💗',動画投稿:'🎬'};
+
+const MODE_MSG = {
+  tired:     '😴 今日は疲れてる日モードです。<br>無理しないで、できることだけでOK。あなたは毎日よく頑張っています 🌿',
+  pregnancy: '🤱 妊娠後期モードです。<br>ゆっくり休むことが一番の仕事。重要なことだけ見せています 💕',
+  rainy:     '🌧️ 雨の日モードです。<br>おうち時間を大切に。外出不要なタスクを優先しています 🍵'
+};
+
+const HERO_MSG = {
+  normal:    ['今日も少しずつで大丈夫です 🌿','できることからコツコツと ✨','一つずつ片付けていきましょう 💪','あなたのペースで大丈夫 🌸'],
+  tired:     ['今日は無理しないで 🌙','休むことも大切な仕事です 💕','できることだけで十分です 🌿'],
+  pregnancy: ['体を大切に、ゆっくりと 🌸','赤ちゃんのためにも休んでね 💕','無理は禁物。一番は休むこと 🌿'],
+  rainy:     ['おうち時間を楽しんで ☕','雨の日はゆっくりでOK 🌧️','お家でできることをやりましょう 🏠']
+};
+
+// ── INIT ──
+function init() {
+  if (!tasks.length && !shopping.length && !school.length) loadSamples();
+  updateDate();
+  applyMode(mode);
+  renderAll();
+}
+
+function loadSamples() {
+  const now = new Date();
+  const fmt = (d) => d.toISOString().slice(0,16);
+  const today = new Date(now); today.setHours(10,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+
+  tasks = [
+    {id:'s1',title:'洗濯をする',    category:'家事',   datetime:fmt(today),    memo:'',priority:'high',done:false,createdAt:now.toISOString()},
+    {id:'s2',title:'牛乳・卵を買う',category:'買い物', datetime:fmt(today),    memo:'スーパーで',priority:'mid',done:false,createdAt:now.toISOString()},
+    {id:'s3',title:'夕食を作る',    category:'家事',   datetime:'',            memo:'',priority:'mid',done:false,createdAt:now.toISOString()},
+    {id:'s4',title:'子どもの送迎',  category:'子ども', datetime:fmt(today),    memo:'14:30 お迎え',priority:'high',done:false,createdAt:now.toISOString()},
+    {id:'s5',title:'動画1本投稿',   category:'動画投稿',datetime:fmt(tomorrow), memo:'',priority:'mid',done:false,createdAt:now.toISOString()},
+  ];
+  school = [
+    {id:'sc1',title:'図書館の本返却',type:'提出',deadline:fmt(today).slice(0,10),    memo:'3冊あり',done:false,createdAt:now.toISOString()},
+    {id:'sc2',title:'運動会の持ち物',type:'持ち物',deadline:fmt(tomorrow).slice(0,10),memo:'お弁当・水筒・帽子',done:false,createdAt:now.toISOString()},
+  ];
+  shopping = [
+    {id:'sh1',name:'牛乳',done:false},
+    {id:'sh2',name:'卵',done:false},
+    {id:'sh3',name:'パン',done:false},
+  ];
+  save();
+}
+
+function save() {
+  localStorage.setItem('lct_tasks',  JSON.stringify(tasks));
+  localStorage.setItem('lct_shop',   JSON.stringify(shopping));
+  localStorage.setItem('lct_school', JSON.stringify(school));
+}
+
+function renderAll() { renderToday(); renderTasks(); renderShop(); renderSchool(); }
+
+function updateDate() {
+  const d = new Date();
+  const wd = ['日','月','火','水','木','金','土'];
+  document.getElementById('dateTxt').textContent =
+    `${d.getMonth()+1}月${d.getDate()}日(${wd[d.getDay()]})`;
+}
+
+// ── MODE ──
+function setMode(m) {
+  mode = m;
+  localStorage.setItem('lct_mode', m);
+  applyMode(m);
+  renderAll();
+}
+
+function applyMode(m) {
+  document.body.className = m !== 'normal' ? `mode-${m}` : '';
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+
+  const banner = document.getElementById('modeBanner');
+  banner.innerHTML = MODE_MSG[m] ? `<div class="mode-banner">${MODE_MSG[m]}</div>` : '';
+
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent =
+    h < 12 ? 'おはようございます ☀️' : h < 17 ? 'こんにちは 🌤️' : 'こんばんは 🌙';
+
+  const msgs = HERO_MSG[m] || HERO_MSG.normal;
+  document.getElementById('heroMsg').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+}
+
+// ── SECTION ──
+function showSec(name) {
+  curSec = name;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`sec-${name}`).classList.add('active');
+  document.getElementById(`nav-${name}`).classList.add('active');
+  document.getElementById('fab').style.display = name === 'shopping' ? 'none' : 'flex';
+}
+
+// ── TODAY ──
+function renderToday() {
+  const today = todayStart();
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  const limitMap = {normal:7, tired:3, pregnancy:3, rainy:5};
+  const limit = limitMap[mode] || 7;
+
+  let recs = [];
+  tasks.filter(t => !t.done).forEach(t => {
+    if (!t.datetime) {
+      if (t.category === '子ども')    recs.push({t, type:'kids',  score:70});
+      else if (t.priority === 'high') recs.push({t, type:'norm',  score:55});
+      return;
+    }
+    const dt = dayStart(new Date(t.datetime));
+    if (dt < today)                  recs.push({t, type:'urg',   score:100 + (t.priority==='high'?5:0)});
+    else if (dt.getTime()===today.getTime()) {
+      const base = t.category==='子ども' ? 95 : 88;
+      recs.push({t, type:'today', score:base - (t.priority==='high'?0:t.priority==='mid'?5:10)});
+    }
+  });
+
+  recs.sort((a,b)=>b.score-a.score);
+  recs = recs.slice(0, limit);
+
+  const ul = document.getElementById('recList');
+  if (!recs.length) {
+    const defaults = mode==='tired'
+      ? ['😴 今日は休んで充電しましょう']
+      : ['洗濯をする 🌿','15分だけ片付け ✨','今日の夕食を考える 🍳'];
+    ul.innerHTML = defaults.map(d=>`<li class="rec-item"><span class="badge b-norm">おすすめ</span>${d}</li>`).join('');
+  } else {
+    ul.innerHTML = recs.map(r=>{
+      const bc = r.type==='urg'?'b-urg':r.type==='today'?'b-today':r.type==='kids'?'b-kids':'b-norm';
+      const bt = r.type==='urg'?'期限切れ':r.type==='today'?'今日':r.type==='kids'?'子ども':'優先';
+      return `<li class="rec-item"><span class="badge ${bc}">${bt}</span>${CAT_IC[r.t.category]||''} ${esc(r.t.title)}</li>`;
+    }).join('');
+  }
+
+  // Progress
+  const todayTasks = tasks.filter(t => t.datetime && dayStart(new Date(t.datetime)).getTime()===today.getTime());
+  const done = todayTasks.filter(t=>t.done).length, total = todayTasks.length;
+  document.getElementById('progTxt').textContent =
+    total===0 ? 'まだ今日のタスクがありません' :
+    `${done} / ${total} 完了${done===total?' 🎉 全部できました！':''}`;
+  document.getElementById('progFill').style.width = total ? `${Math.round(done/total*100)}%` : '0%';
+
+  // Urgent school
+  renderUrgentCard();
+}
+
+function renderUrgentCard() {
+  const today = todayStart();
+  const three = new Date(today); three.setDate(three.getDate()+3);
+  const urg = school.filter(n=>{
+    if(!n.deadline||n.done) return false;
+    return new Date(n.deadline) <= three;
+  }).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+
+  const card = document.getElementById('urgentCard');
+  if (!urg.length) { card.style.display='none'; return; }
+  card.style.display = 'block';
+  document.getElementById('urgentList').innerHTML = urg.map(n=>{
+    const diff = Math.ceil((new Date(n.deadline)-today)/(86400000));
+    const txt = diff<=0?'今日！':diff===1?'明日！':`あと${diff}日`;
+    return `<div class="dl-warn">⚠️ <strong>${esc(n.title)}</strong> — ${txt}${n.memo?`<br><small style="opacity:.8">${esc(n.memo)}</small>`:''}</div>`;
+  }).join('');
+}
+
+// ── TASKS ──
+function setFilter(f) {
+  curFilter = f;
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.toggle('active', t.dataset.f===f));
+  renderTasks();
+}
+
+function renderTasks() {
+  let list = curFilter==='all' ? [...tasks] : tasks.filter(t=>t.category===curFilter);
+  list.sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    return score(b)-score(a);
+  });
+
+  const card = document.getElementById('taskCard');
+  if (!list.length) {
+    card.innerHTML = `<div class="empty"><span class="ei">🌸</span>タスクがありません<br><small>右下の ＋ から追加できます</small></div>`;
+    return;
+  }
+  card.innerHTML = list.map(renderTask).join('');
+}
+
+function score(t) {
+  if(t.done) return -1;
+  let s=0;
+  const today=todayStart();
+  if(t.datetime){
+    const d=dayStart(new Date(t.datetime));
+    if(d<today) s+=100;
+    else if(d.getTime()===today.getTime()) s+=80;
+  }
+  if(t.category==='子ども') s+=20;
+  s += t.priority==='high'?15:t.priority==='mid'?5:0;
+  return s;
+}
+
+function renderTask(t) {
+  const today = todayStart();
+  let dtxt='', dcls='t-date';
+  if (t.datetime) {
+    const dt = new Date(t.datetime), ds = dayStart(dt);
+    const m=dt.getMonth()+1, d=dt.getDate(), h=dt.getHours(), mi=String(dt.getMinutes()).padStart(2,'0');
+    if(ds<today)                        { dtxt=`${m}/${d} 期限切れ`; dcls='t-date ov'; }
+    else if(ds.getTime()===today.getTime()) { dtxt=`今日 ${h}:${mi}`;  dcls='t-date td'; }
+    else                                  dtxt=`${m}/${d} ${h}:${mi}`;
+  }
+  const pi = t.priority==='high'?'🔴':t.priority==='mid'?'🟡':'🟢';
+  return `<div class="task-item${t.done?' done':''}">
+    <div class="chk${t.done?' on':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+    <div class="t-body">
+      <div class="t-title">${CAT_IC[t.category]||''} ${esc(t.title)}</div>
+      <div class="t-meta">
+        <span class="t-cat">${t.category}</span>
+        ${dtxt?`<span class="${dcls}">📅 ${dtxt}</span>`:''}
+        <span>${pi}</span>
+      </div>
+      ${t.memo?`<div class="t-memo">💬 ${esc(t.memo)}</div>`:''}
+    </div>
+    <button class="btn-ic" onclick="delTask('${t.id}')">🗑️</button>
+  </div>`;
+}
+
+function toggleTask(id) {
+  const t = tasks.find(x=>x.id===id);
+  if(t){ t.done=!t.done; save(); renderAll(); }
+}
+function delTask(id) {
+  if(!confirm('このタスクを削除しますか？')) return;
+  tasks = tasks.filter(x=>x.id!==id); save(); renderAll();
+}
+
+// ── ADD TASK ──
+function openFab() {
+  if(curSec==='school') { openM('modalSchool'); return; }
+  curPri='high'; updatePri();
+  openM('modalTask');
+}
+function openM(id){ document.getElementById(id).classList.add('open'); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
+function bgClose(e,id){ if(e.target===document.getElementById(id)) closeM(id); }
+
+function setPri(p){ curPri=p; updatePri(); }
+function updatePri(){
+  document.getElementById('pH').className='pri-btn'+(curPri==='high'?' ph':'');
+  document.getElementById('pM').className='pri-btn'+(curPri==='mid'?' pm':'');
+  document.getElementById('pL').className='pri-btn'+(curPri==='low'?' pl':'');
+}
+
+function saveTask(){
+  const title=document.getElementById('tTitle').value.trim();
+  if(!title){ alert('タイトルを入力してください 🙏'); return; }
+  tasks.push({
+    id: Date.now()+'',
+    title,
+    category: document.getElementById('tCat').value,
+    datetime: document.getElementById('tDatetime').value,
+    memo: document.getElementById('tMemo').value.trim(),
+    priority: curPri,
+    done: false,
+    createdAt: new Date().toISOString()
+  });
+  document.getElementById('tTitle').value='';
+  document.getElementById('tDatetime').value='';
+  document.getElementById('tMemo').value='';
+  save(); closeM('modalTask'); renderAll();
+}
+
+// ── SHOPPING ──
+function renderShop(){
+  const active = shopping.filter(s=>!s.done);
+  const done   = shopping.filter(s=>s.done);
+
+  document.getElementById('shopActive').innerHTML = active.length
+    ? active.map(s=>shopItem(s)).join('')
+    : `<div class="empty"><span class="ei">🛒</span>リストは空です</div>`;
+
+  document.getElementById('shopDone').innerHTML = done.length
+    ? done.map(s=>shopItem(s)).join('')
+    : `<div style="color:var(--text-light);font-size:13px;padding:8px 0">まだありません</div>`;
+}
+function shopItem(s){
+  return `<div class="shop-item${s.done?' done':''}">
+    <div class="s-chk${s.done?' on':''}" onclick="toggleShop('${s.id}')">${s.done?'✓':''}</div>
+    <span class="s-name">${esc(s.name)}</span>
+    <button class="btn-ic" onclick="delShop('${s.id}')">🗑️</button>
+  </div>`;
+}
+function addShop(){
+  const v=document.getElementById('shopInput').value.trim();
+  if(!v) return;
+  shopping.push({id:Date.now()+'',name:v,done:false});
+  document.getElementById('shopInput').value='';
+  save(); renderShop();
+}
+function qShop(name){
+  if(shopping.find(s=>s.name===name&&!s.done)) return;
+  shopping.push({id:Date.now()+'',name,done:false});
+  save(); renderShop();
+}
+function toggleShop(id){
+  const s=shopping.find(x=>x.id===id);
+  if(s){ s.done=!s.done; save(); renderShop(); }
+}
+function delShop(id){ shopping=shopping.filter(x=>x.id!==id); save(); renderShop(); }
+function clearDoneShop(){ shopping=shopping.filter(s=>!s.done); save(); renderShop(); }
+
+// ── SCHOOL ──
+function renderSchool(){
+  const today=todayStart();
+  const three=new Date(today); three.setDate(three.getDate()+3);
+
+  const urg=school.filter(n=>!n.done&&n.deadline&&new Date(n.deadline)<=three)
+    .sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+
+  document.getElementById('schoolBanner').innerHTML = urg.map(n=>{
+    const diff=Math.ceil((new Date(n.deadline)-today)/86400000);
+    const txt=diff<=0?'今日期限！':diff===1?'明日期限！':`あと${diff}日`;
+    return `<div class="dl-warn">⚠️ <strong>${esc(n.title)}</strong> — ${txt}</div>`;
+  }).join('');
+
+  const active=school.filter(n=>!n.done).sort((a,b)=>{
+    if(!a.deadline) return 1; if(!b.deadline) return -1;
+    return new Date(a.deadline)-new Date(b.deadline);
+  });
+  const done=school.filter(n=>n.done);
+  const all=[...active,...done];
+
+  document.getElementById('schoolList').innerHTML = all.length
+    ? all.map(n=>{
+        let dtxt='', dclr='var(--text-light)';
+        if(n.deadline){
+          const dl=new Date(n.deadline);
+          const diff=Math.ceil((dl-today)/86400000);
+          if(diff<=0){ dtxt='期限切れ！'; dclr='var(--danger)'; }
+          else if(diff<=3){ dtxt=`あと${diff}日`; dclr='var(--danger)'; }
+          else{ const m=dl.getMonth()+1,d=dl.getDate(); dtxt=`${m}/${d}`; }
+        }
+        return `<div class="school-item">
+          <span class="s-type type-${n.type}">${n.type}</span>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;${n.done?'text-decoration:line-through;opacity:.5':''};margin-bottom:4px">${esc(n.title)}</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              ${dtxt?`<span style="font-size:12px;color:${dclr}">📅 ${dtxt}</span>`:''}
+              ${n.memo?`<span style="font-size:12px;color:var(--text-light)">💬 ${esc(n.memo)}</span>`:''}
+            </div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn-ic" onclick="toggleSchool('${n.id}')" title="${n.done?'未完了に戻す':'完了にする'}">${n.done?'↩️':'✅'}</button>
+            <button class="btn-ic" onclick="delSchool('${n.id}')">🗑️</button>
+          </div>
+        </div>`;
+      }).join('')
+    : `<div class="empty"><span class="ei">📚</span>まだメモがありません<br><small>右下の ＋ から追加できます</small></div>`;
+}
+
+function saveSchool(){
+  const title=document.getElementById('sTitle').value.trim();
+  if(!title){ alert('タイトルを入力してください 🙏'); return; }
+  school.push({
+    id: Date.now()+'',
+    title,
+    type:  document.getElementById('sType').value,
+    deadline: document.getElementById('sDeadline').value,
+    memo: document.getElementById('sMemo').value.trim(),
+    done: false,
+    createdAt: new Date().toISOString()
+  });
+  document.getElementById('sTitle').value='';
+  document.getElementById('sDeadline').value='';
+  document.getElementById('sMemo').value='';
+  save(); closeM('modalSchool'); renderAll();
+}
+function toggleSchool(id){
+  const n=school.find(x=>x.id===id);
+  if(n){ n.done=!n.done; save(); renderAll(); }
+}
+function delSchool(id){
+  if(!confirm('このメモを削除しますか？')) return;
+  school=school.filter(x=>x.id!==id); save(); renderAll();
+}
+
+// ── UTILS ──
+function todayStart(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function dayStart(d){ const c=new Date(d); c.setHours(0,0,0,0); return c; }
+function esc(s){ if(!s)return''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+init();
+</script>
+</body>
+</html>
